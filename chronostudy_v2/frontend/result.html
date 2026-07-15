@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rekomendasi Jadwal — ChronoStudy</title>
+<link rel="stylesheet" href="css/navbar.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+  :root{--cream:#FAF7F4;--dark:#1C1917;--violet:#7C5CFC;--lavender:#C8B8FF;
+    --card:#F0EBE3;--amber:#E8D5B0;--muted:#78716C;--border:#E7E0D8;}
+  body{background:var(--cream);color:var(--dark);font-family:'DM Sans',sans-serif;}
+  .font-display{font-family:'Playfair Display',serif;}
+  .font-mono{font-family:'DM Mono',monospace;}
+
+  .page-toolbar{position:static;top:64px;z-index:40;background:rgba(250,247,244,.92);
+    backdrop-filter:blur(12px);border-bottom:1px solid var(--border);}
+  .page-toolbar-inner{width:100%;max-width:1100px;margin:auto;padding:.75rem 2rem;
+    display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap;}
+
+  /* TABS (Mingguan / Harian) */
+  .view-tab{padding:.5rem 1.25rem;border-radius:10px;font-size:.875rem;font-weight:500;
+    cursor:pointer;transition:all .2s;border:none;font-family:'DM Sans',sans-serif;}
+  .view-tab.active{background:var(--violet);color:#fff;}
+  .view-tab:not(.active){background:transparent;color:var(--muted);}
+  .view-tab:not(.active):hover{color:var(--dark);}
+
+  /* KRONOTIPE HERO CARD */
+  .krono-card{background:linear-gradient(135deg,#EDE9FE 0%,#FEF3C7 100%);
+    border:1px solid var(--border);border-radius:24px;padding:2.5rem;
+    display:flex;align-items:flex-start;justify-content:space-between;gap:1.5rem;}
+
+  /* ENERGY RIBBON — signature element */
+  .day-card{background:#fff;border:1px solid var(--border);border-radius:20px;
+    display:flex;overflow:hidden;margin-bottom:12px;
+    transition:box-shadow .2s;}
+  .day-card:hover{box-shadow:0 4px 20px rgba(124,92,252,.1);}
+  .ribbon{width:6px;flex-shrink:0;}
+  .ribbon-peak  {background:linear-gradient(180deg,#A78BFA,#7C5CFC);}
+  .ribbon-good  {background:linear-gradient(180deg,#6EE7B7,#10B981);}
+  .ribbon-mid   {background:linear-gradient(180deg,#FCD34D,#F59E0B);}
+  .ribbon-low   {background:linear-gradient(180deg,#FCA5A5,#F87171);}
+  .day-card-body{flex:1;padding:1.25rem 1.25rem 1.25rem .85rem;}
+  .day-name{font-weight:600;font-size:.8rem;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:.75rem;}
+  .sesi-row{display:flex;align-items:center;gap:.75rem;padding:.5rem .75rem;
+    background:var(--cream);border-radius:10px;margin-bottom:.4rem;}
+  .sesi-jam{font-family:'DM Mono',monospace;font-size:.8rem;color:var(--violet);
+    font-weight:500;min-width:52px;}
+  .sesi-mk{flex:1;font-size:.875rem;color:var(--dark);font-weight:500;}
+  .sesi-pill{font-size:.7rem;padding:2px 10px;border-radius:999px;font-weight:500;}
+  .pill-peak{background:#EDE9FE;color:#5B21B6;}
+  .pill-good{background:#D1FAE5;color:#065F46;}
+  .pill-mid{background:#FEF3C7;color:#92400E;}
+  .pill-low{background:#FEE2E2;color:#991B1B;}
+
+  /* MASONRY GRID for weekly view */
+  .week-grid{columns:2;column-gap:14px;}
+  @media(max-width:640px){.week-grid{columns:1;}}
+  @media(min-width:1024px){.week-grid{columns:3;}}
+  .week-grid .day-card{break-inside:avoid;}
+
+  /* KURVA */
+  .kurva-wrap{background:#fff;border:1px solid var(--border);border-radius:20px;padding:1.5rem;margin-bottom:1.25rem;}
+  .kurva-canvas{width:100%;height:100px;}
+
+  /* HARIAN VIEW */
+  .hari-selector{display:flex;gap:.5rem;overflow-x:auto;padding-bottom:.25rem;margin-bottom:1.5rem;}
+  .hari-selector::-webkit-scrollbar{height:3px;}
+  .hari-selector::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px;}
+  .hari-btn{flex-shrink:0;padding:.45rem 1rem;border:1.5px solid var(--border);
+    border-radius:999px;font-size:.82rem;font-weight:500;cursor:pointer;
+    transition:all .15s;background:#fff;}
+  .hari-btn.active{background:var(--violet);color:#fff;border-color:var(--violet);}
+  .hari-btn:not(.active):hover{border-color:var(--violet);}
+
+    /* ── WALLPAPER: Figma redesign ───────────────────────────── */
+#wallpaper-template{
+  font-family:'Inter',sans-serif;
+  background:#F1EBDE;
+  position:absolute; overflow:visible;
+  width:400px; min-height:711px; box-sizing:border-box;
+  padding:1.9rem 1.5rem 1.6rem; display:flex; flex-direction:column;
+  color:#2A2724;
+}
+.wp-header{ display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:1.4rem; }
+.wp-brand{
+  font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:.72rem;
+  color:#8A8176; letter-spacing:.14em; text-transform:uppercase;
+  border-bottom:2px solid #DE5E2B; padding-bottom:5px; display:inline-block;
+}
+.wp-icon{
+  width:38px; height:38px; border-radius:50%; background:#DE5E2B;
+  display:flex; align-items:center; justify-content:center; font-size:1.05rem;
+  box-shadow:0 3px 8px rgba(222,94,43,.35); flex-shrink:0;
+}
+.wp-title{
+  font-family:'Fraunces',serif; font-weight:900; font-size:1.85rem; line-height:1.08;
+  color:#211E1B; margin-bottom:.5rem;
+}
+.wp-subtitle{ font-size:.78rem; color:#9C948A; margin-bottom:1.3rem; }
+
+.wp-pillrow{ display:flex; gap:6px; margin-bottom:1.5rem; }
+.wp-pill{
+  flex:1; background:#FBF8F3; border-radius:14px; padding:.5rem .3rem;
+  text-align:center; border:1px solid #EAE2D3;
+}
+.wp-pill-day{ font-size:.58rem; font-weight:700; color:#B0A796; letter-spacing:.06em; text-transform:uppercase; }
+.wp-pill-dot{ width:5px; height:5px; border-radius:50%; background:#DE5E2B; margin:5px auto 0; }
+.wp-pill-dot.empty{ background:#E4DCCC; }
+
+.wp-day-block{ margin-bottom:.9rem; }
+.wp-day-header{ display:flex; align-items:baseline; gap:8px; margin-bottom:.65rem; }
+.wp-day-name{
+  font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:.82rem;
+  color:#211E1B; letter-spacing:.05em; text-transform:uppercase;
+}
+.wp-day-line{ flex:1; border-bottom:1.5px dotted #D3C9B8; transform:translateY(-3px); }
+
+.wp-card{
+  background:#FBF8F3; border-radius:14px; padding:.7rem .85rem;
+  display:flex; align-items:center; gap:.7rem; margin-bottom:.5rem;
+  border-left:4px solid var(--accent); position:relative;
+}
+.wp-badge{
+  position:absolute; top:6px; right:8px; font-size:.6rem; color:#C8BEAE; font-weight:700;
+}
+.wp-jam{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:.92rem; color:#211E1B; width:44px; flex-shrink:0; }
+.wp-mk{ flex:1; font-weight:700; font-size:.85rem; color:#211E1B; }
+.wp-chip{
+  font-family:'Inter',sans-serif; font-weight:700; font-size:.62rem;
+  padding:4px 9px; border-radius:8px; white-space:nowrap; flex-shrink:0;
+}
+
+.wp-stats{ display:flex; gap:8px; margin-top:auto; padding-top:1.3rem; }
+.wp-stat{
+  flex:1; background:#FBF8F3; border-radius:14px; padding:.75rem .5rem;
+  text-align:center; border:1px solid #EAE2D3;
+}
+.wp-stat-icon{ font-size:1rem; margin-bottom:2px; }
+.wp-stat-num{ font-family:'Fraunces',serif; font-weight:900; font-size:1.3rem; color:#211E1B; line-height:1.1; }
+.wp-stat-label{ font-size:.6rem; color:#9C948A; margin-top:1px; }
+
+  /* TIMELINE view */
+  .timeline{position:relative;padding-left:3rem;}
+  .tl-line{position:absolute;left:1.2rem;top:0;bottom:0;width:2px;
+    background:linear-gradient(180deg,var(--lavender),var(--amber));}
+  .tl-item{position:relative;margin-bottom:1.25rem;}
+  .tl-dot{position:absolute;left:-1.88rem;top:.35rem;width:14px;height:14px;
+    border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 2px var(--violet);}
+  .tl-dot.peak{background:var(--violet);}
+  .tl-dot.good{background:#10B981;}
+  .tl-dot.mid{background:#F59E0B;}
+  .tl-dot.low{background:#F87171;}
+  .tl-card{background:#fff;border:1px solid var(--border);border-radius:14px;
+    padding:1rem 1.25rem;display:flex;align-items:center;gap:1rem;}
+  .tl-jam{font-family:'DM Mono',monospace;font-size:.9rem;color:var(--violet);font-weight:500;}
+  .tl-mk{flex:1;font-weight:500;font-size:.95rem;}
+  .tl-info{font-size:.75rem;color:var(--muted);}
+
+  .btn-primary{background:var(--violet);color:#fff;border:none;border-radius:12px;
+    padding:.7rem 1.5rem;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.875rem;
+    cursor:pointer;transition:opacity .15s;display:inline-flex;align-items:center;gap:8px;}
+  .btn-primary:hover{opacity:.88;}
+  .btn-outline{background:transparent;border:1.5px solid var(--border);border-radius:12px;
+    padding:.65rem 1.4rem;font-family:'DM Sans',sans-serif;font-size:.875rem;
+    color:var(--dark);cursor:pointer;transition:border-color .2s;}
+  .btn-outline:hover{border-color:var(--violet);}
+
+  .tips-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.25rem;}
+  .tips-title{font-weight:600;font-size:.875rem;margin-bottom:.75rem;}
+  .tips-item{display:flex;gap:.6rem;font-size:.82rem;color:var(--muted);
+    line-height:1.6;margin-bottom:.4rem;}
+
+    /* FOOTER */
+  footer{border-top:1px solid var(--border);margin-top:3rem;}
+  .footer-inner{max-width:78rem;margin:0 auto;padding:2rem 2.5rem;
+    display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;}
+  .footer-brand{font-family:'Playfair Display',serif;font-style:italic;font-size:1.05rem;color:var(--dark);}
+  .footer-links{display:flex;gap:1.5rem;flex-wrap:wrap;}
+  .footer-links a{color:var(--muted);font-size:.82rem;text-decoration:none;}
+  .footer-links a:hover{color:var(--violet);}
+  .footer-copy{font-size:.78rem;color:var(--muted);width:100%;text-align:center;padding-top:1rem;
+    border-top:1px solid var(--border);margin-top:.5rem;}
+
+  /* POMODORO MODAL */
+  .pomodoro-backdrop.hidden{ display:none; }
+  .pomodoro-backdrop{
+    position:fixed; inset:0; background:rgba(28,25,23,.55);
+    z-index:200; display:flex; align-items:center; justify-content:center;
+    padding:1.5rem;
+  }
+  .pomodoro-box{
+    position:relative; width:100%; max-width:520px; max-height:90vh;
+    background:transparent; border-radius:20px;
+  }
+  .pomodoro-iframe{
+    width:100%; height:min(90vh,720px); border:none; border-radius:20px;
+    background:#F5F3FF; display:block; overflow:hidden;
+  }
+  .pomodoro-close{
+    position:absolute; top:-.25rem; right:-.25rem; z-index:210;
+    width:32px; height:32px; border-radius:50%; border:none;
+    background:#fff; color:#1C1917; font-size:.9rem; cursor:pointer;
+    box-shadow:0 2px 10px rgba(0,0,0,.15);
+  }
+</style>
+</head>
+<body>
+
+<div id="navbar-root"></div>
+
+<div class="page-toolbar">
+  <div class="page-toolbar-inner">
+    <div class="flex gap-1 bg-stone-100 p-1 rounded-xl">
+      <button class="view-tab active" id="tab-mingguan" onclick="switchView('mingguan')">Mingguan</button>
+      <button class="view-tab" id="tab-harian" onclick="switchView('harian')">Harian</button>
+    </div>
+    <button class="btn-outline" style="padding:.45rem 1rem;font-size:.8rem" onclick="openPomodoro()">⏱️ Pomodoro</button>
+  </div>
+</div>
+
+<main class="w-full max-w-[1100px] mx-auto px-8 pt-8 pb-16">
+
+  <!-- KRONOTIPE HEADER -->
+  <div class="krono-card mb-6">
+    <div>
+      <p class="font-mono text-xs text-stone-400 uppercase tracking-widest mb-1">Rekomendasi Jadwal Belajar</p>
+      <h1 class="font-display text-3xl mb-2" id="result-title">—</h1>
+      <p class="text-stone-500 text-base leading-relaxed max-w-md" id="result-desc">—</p>
+    </div>
+    <div class="flex flex-col gap-2 items-end shrink-0">
+      <div id="krono-badge" class="text-2xl"></div>
+      <div class="flex gap-2">
+        <button class="btn-primary" style="padding:.6rem 1.25rem;font-size:.8rem" onclick="doDownloadPDF()">⬇ Unduh PDF</button>
+        <button class="btn-primary" style="padding:.6rem 1.25rem;font-size:.8rem" onclick="doSavePNG()">🖼️ Simpan Wallpaper</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="warning-energi" class="hidden" style="background:#FDF0DC;border:1.5px solid #F0D5A0;
+    color:#92620B;border-radius:12px;padding:.9rem 1.1rem;font-size:.85rem;margin-bottom:1rem;
+    display:flex;gap:.6rem;align-items:flex-start;">
+    <span>⚠️</span>
+    <span>Ada beberapa sesi yang jatuh pas energi kognitifmu lagi rendah. Cek lagi jadwalnya ya — kalau memang gak ada pilihan lain, pastikan istirahat cukup sebelum sesi itu.</span>
+  </div>
+
+  <!-- VIEW: MINGGUAN -->
+  <div id="view-mingguan">
+    <div class="flex items-center justify-between mb-4">
+      <p class="font-mono text-xs text-stone-400 uppercase tracking-widest">Jadwal Mingguan</p>
+      <div class="flex gap-2">
+        <button class="btn-outline" style="padding:.45rem 1rem;font-size:.8rem"
+                onclick="window.location.href='input.html'">← Ubah input</button>
+        <button class="btn-primary" style="padding:.45rem 1rem;font-size:.8rem" id="btn-regenerate"
+                onclick="doRegenerate()">🔄 Buat ulang</button>
+      </div>
+    </div>
+
+    <!-- KURVA KOGNITIF -->
+    <div class="kurva-wrap mb-4">
+      <p class="text-xs font-medium text-stone-500 mb-3">Kurva energi kognitif harianmu</p>
+      <canvas class="kurva-canvas" id="kurva-canvas" height="80"></canvas>
+      <div class="flex justify-between mt-1">
+        <span class="font-mono text-xs text-stone-300">00.00</span>
+        <span class="font-mono text-xs text-stone-300">06.00</span>
+        <span class="font-mono text-xs text-stone-300">12.00</span>
+        <span class="font-mono text-xs text-stone-300">18.00</span>
+        <span class="font-mono text-xs text-stone-300">23.00</span>
+      </div>
+    </div>
+
+    <div class="week-grid" id="week-grid">
+      <div class="text-center text-stone-300 py-12 col-span-2">Memuat jadwal...</div>
+    </div>
+
+    <!-- TIPS -->
+    <div class="tips-card mt-4" id="tips-card"></div>
+  </div>
+
+  <!-- VIEW: HARIAN -->
+  <div id="view-harian" class="hidden">
+    <div class="hari-selector" id="hari-selector"></div>
+    <div id="harian-content">
+      <div class="text-center text-stone-300 py-12">Pilih hari di atas</div>
+    </div>
+  </div>
+
+  <!-- WALLPAPER TEMPLATE (buat generate PNG, gak keliatan di layar) -->
+  <div id="wallpaper-template" style="left:-9999px; top:0;">
+    <div class="wp-header">
+      <div class="wp-brand">ChronoStudy</div>
+      <div class="wp-icon">📚</div>
+    </div>
+    <div class="wp-title" id="wp-title">Jadwal<br>Mingguan</div>
+    <div class="wp-subtitle" id="wp-subtitle">—</div>
+    <div class="wp-pillrow" id="wp-pillrow"></div>
+    <div id="wp-week"></div>
+    <div class="wp-stats" id="wp-stats"></div>
+  </div>
+
+</main>
+
+<footer>
+    <div class="footer-inner">
+      <span class="footer-brand">ChronoStudy</span>
+      <div class="footer-links">
+        <a href="mailto:chronostudy.app@gmail.com">naurahan09@gmail.com</a>
+      </div>
+      <div class="footer-copy">© 2026 ChronoStudy — All right reserved, dibuat untuk keperluan penelitian.</div>
+    </div>
+  </footer>
+
+<!-- POMODORO MODAL -->
+<div id="pomodoro-backdrop" class="pomodoro-backdrop hidden" onclick="closePomodoro(event)">
+  <div class="pomodoro-box" onclick="event.stopPropagation()">
+    <button class="pomodoro-close" onclick="closePomodoro()">✕</button>
+    <iframe id="pomodoro-frame" class="pomodoro-iframe" src="about:blank" scrolling="no"></iframe>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/navbar.js"></script>
+<script>
+requireAuth();
+renderNavbar('buat-jadwal');
+let resultData = null;
+const HARI_ORDER = ["Senin","Selasa","Rabu","Kamis","Jumat","Sabtu","Minggu"];
+
+// Energi helper
+function enClass(en) {
+  if (en >= 75) return 'peak';
+  if (en >= 50) return 'good';
+  if (en >= 30) return 'mid';
+  return 'low';
+}
+function enLabel(en) {
+  if (en >= 75) return '⚡ Paling Semangat';
+  if (en >= 50) return '🟢 Masih Fokus';
+  if (en >= 30) return '🟡 Mulai Lelah';
+  return '😴 Lagi Ngantuk';
+}
+function ribbonClass(sesi) {
+  // Ribbon warna berdasarkan energi tertinggi di hari itu
+  const maxEn = Math.max(...sesi.map(s => s[2]));
+  return maxEn >= 75 ? 'ribbon-peak' : maxEn >= 50 ? 'ribbon-good' : maxEn >= 30 ? 'ribbon-mid' : 'ribbon-low';
+}
+
+async function loadResult() {
+  // Coba dari localStorage dulu (fresh generate), fallback ke API
+  const cached = localStorage.getItem('cs_result');
+  if (cached) {
+    resultData = JSON.parse(cached);
+    localStorage.removeItem('cs_result');
+  } else {
+    try { resultData = await getJadwalTerakhir(); }
+    catch(e) { document.querySelector('main').innerHTML =
+      `<div class="text-center py-20 text-stone-400">${e.message}<br><a href="input.html" class="text-violet-500 underline mt-2 inline-block">← Buat jadwal baru</a></div>`; return; }
+  }
+  renderAll();
+}
+
+function renderAll() {
+  const { kronotipe, skor_meq, jadwal, kurva } = resultData;
+  const adaEnergiRendah = Object.values(jadwal).some(sesiHari => sesiHari.some(([,,en]) => en < 30));
+  document.getElementById('warning-energi').classList.toggle('hidden', !adaEnergiRendah);
+
+  // Header
+  const desc = {
+    'Tipe Pagi':   ['🌅', 'Pagi ini punya sains di belakangnya.', 'Otakmu paling tajam di pagi hari. Matkul berat sudah dijadwalkan di jam-jam emas itu.'],
+    'Intermediate':['⚖️', 'Ritme fleksibel, pilihan lebih banyak.', 'Energimu cukup merata dari pagi hingga siang. Sistem menyebar matkul berat di rentang produktif itu.'],
+    'Tipe Malam':  ['🌙', 'Malammu bukan kelemahan — itu ritme.', 'Puncak kognitifmu ada di sore–malam. Matkul paling berat sudah ditempatkan di sana.'],
+  };
+  const [emoji, title, subtitle] = desc[kronotipe] || desc['Intermediate'];
+  document.getElementById('result-title').innerHTML = `${title} <span style="color:var(--violet)">${emoji}</span>`;
+  document.getElementById('result-desc').textContent = subtitle;
+  document.getElementById('krono-badge').innerHTML = `
+    <span style="font-size:1rem;font-weight:500;color:#4C1D95;background:#EDE9FE;
+    padding:4px 12px;border-radius:999px;font-family:'DM Sans'">${kronotipe} · MEQ ${skor_meq}</span>
+  `;
+
+  // Kurva
+  drawKurva(kurva);
+
+  // Week grid
+  renderWeekGrid(jadwal);
+
+  // Tips
+  renderTips(kronotipe);
+
+  // Hari selector for daily view
+  const hariAda = HARI_ORDER.filter(h => jadwal[h] && jadwal[h].length > 0);
+  renderHariSelector(hariAda, jadwal);
+}
+
+function drawKurva(kurva) {
+  const canvas = document.getElementById('kurva-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth || 600; const H = 80;
+  canvas.width = W; canvas.height = H;
+
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, 'rgba(124,92,252,.3)');
+  grad.addColorStop(1, 'rgba(124,92,252,0)');
+
+  ctx.beginPath();
+  kurva.forEach((v, i) => {
+    const x = (i / 23) * W;
+    const y = H - (v * (H - 8)) - 4;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+  ctx.fillStyle = grad; ctx.fill();
+
+  ctx.beginPath();
+  kurva.forEach((v, i) => {
+    const x = (i / 23) * W;
+    const y = H - (v * (H - 8)) - 4;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = '#7C5CFC'; ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round'; ctx.stroke();
+}
+
+function renderWeekGrid(jadwal) {
+  const grid = document.getElementById('week-grid');
+  const hariAda = HARI_ORDER.filter(h => jadwal[h] && jadwal[h].length > 0);
+  if (!hariAda.length) {
+    grid.innerHTML = '<div class="text-center text-stone-300 py-12">Tidak ada sesi yang bisa dijadwalkan.</div>'; return;
+  }
+  grid.innerHTML = hariAda.map(hari => {
+    const sesi = [...jadwal[hari]].sort((a,b) => a[0]-b[0]);
+    const rc = ribbonClass(sesi);
+    return `
+    <div class="day-card">
+      <div class="ribbon ${rc}"></div>
+      <div class="day-card-body">
+        <div class="day-name">${hari}</div>
+        ${sesi.map(([jam, mk, en, bl]) => {
+          const ec = enClass(en);
+          const alasan = alasanSesi(mk, jam, en, bl).replace(/"/g, '&quot;');
+          return `<div class="sesi-row" title="${alasan}">
+            <span class="sesi-jam">${String(jam).padStart(2,'0')}.00</span>
+            <span class="sesi-mk">${mk}</span>
+            <span class="sesi-pill pill-${ec}">${enLabel(en)}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function alasanSesi(mk, jam, en, bl) {
+  const jamTxt = `${String(jam).padStart(2,'0')}.00`;
+  const berat = bl >= 4;
+
+  if (en >= 75 && berat) {
+    return `${mk} ditempatkan pukul ${jamTxt} karena pada jam ini fokusmu diperkirakan tinggi, dan mata kuliah ini punya bobot kognitif yang berat (Bloom L${bl}) — pas dikerjakan saat energi lagi puncak.`;
+  }
+  if (en >= 75 && !berat) {
+    return `${mk} ditempatkan pukul ${jamTxt} karena energimu lagi tinggi di jam ini, meski materinya sendiri gak terlalu berat (Bloom L${bl}).`;
+  }
+  if (en >= 50 && berat) {
+    return `${mk} ditempatkan pukul ${jamTxt} karena energimu di jam ini masih cukup stabil untuk fokus mengerjakan materi yang cukup menantang ini (Bloom L${bl}).`;
+  }
+  if (en >= 50 && !berat) {
+    return `${mk} ditempatkan pukul ${jamTxt} karena energimu masih oke di jam ini, cocok untuk materi dengan beban kognitif menengah (Bloom L${bl}).`;
+  }
+  if (en < 50 && !berat) {
+    return `${mk} ditempatkan pukul ${jamTxt} karena beban kognitifnya lebih ringan (Bloom L${bl}), jadi cocok ditaruh saat energimu mulai menurun.`;
+  }
+  return `${mk} ditempatkan pukul ${jamTxt} meski energimu sedang menurun, karena keterbatasan slot waktu yang tersedia. Materinya cukup berat (Bloom L${bl}) — coba istirahat sejenak dulu sebelum mulai.`;
+}
+
+function renderTips(kronotipe) {
+  const tips = {
+    'Tipe Pagi'   : ['Mulai sesi pertama sebelum jam 9 — otak masih segar.','Istirahat tiap 90 menit, bukan tiap 3 jam.','Review catatan di sore hari saat pikiran lebih santai.'],
+    'Intermediate': ['Manfaatkan fleksibilitas ritme kamu — pagi atau siang sama-sama oke.','Teknik 25-50 menit belajar + 10 menit istirahat cocok untuk ritme ini.','Catat materi sulit di pagi, review di sore.'],
+    'Tipe Malam'  : ['Jangan paksa otak di pagi hari — gunakan waktu itu untuk review ringan.','Blok jam 18.00–22.00 sebagai zona belajar utama.','Jaga agar tidak tidur terlalu larut agar kualitas tidur tetap terjaga.'],
+  };
+  const items = tips[kronotipe] || tips['Intermediate'];
+  document.getElementById('tips-card').innerHTML = `
+    <div class="tips-title">💡 Tips untuk kronotipemu</div>
+    ${items.map(t => `<div class="tips-item"><span>→</span><span>${t}</span></div>`).join('')}
+  `;
+}
+
+function renderHariSelector(hariAda, jadwal) {
+  const sel = document.getElementById('hari-selector');
+  sel.innerHTML = hariAda.map((h, i) =>
+    `<button class="hari-btn ${i===0?'active':''}" onclick="selectHari('${h}', this)">${h}</button>`
+  ).join('');
+  if (hariAda[0]) renderHarian(hariAda[0], jadwal[hariAda[0]]);
+}
+
+function selectHari(hari, el) {
+  document.querySelectorAll('.hari-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  const jadwal = resultData.jadwal;
+  renderHarian(hari, jadwal[hari] || []);
+}
+
+function toggleAlasan(id, btn) {
+  const el = document.getElementById(id);
+  el.classList.toggle('hidden');
+  btn.textContent = el.classList.contains('hidden') ? 'Kenapa jam ini? ▾' : 'Kenapa jam ini? ▴';
+}
+
+function renderHarian(hari, sesiList) {
+  const content = document.getElementById('harian-content');
+  if (!sesiList || !sesiList.length) {
+    content.innerHTML = `<div class="text-center text-stone-300 py-12">Tidak ada sesi di hari ${hari}.</div>`;
+    return;
+  }
+  const sorted = [...sesiList].sort((a,b) => a[0]-b[0]);
+  content.innerHTML = `
+    <p class="font-mono text-xs text-stone-400 uppercase tracking-widest mb-4">${hari} — ${sorted.length} sesi</p>
+    <div class="timeline">
+      <div class="tl-line"></div>
+      ${sorted.map(([jam, mk, en, bl], i) => {
+      const ec = enClass(en);
+      const id = `alasan-${hari}-${i}`;
+      return `<div class="tl-item">
+        <div class="tl-dot ${ec}"></div>
+        <div class="tl-card" style="flex-direction:column;align-items:stretch;">
+          <div style="display:flex;align-items:center;gap:.75rem;">
+            <div class="tl-jam">${String(jam).padStart(2,'0')}.00</div>
+            <div class="flex-1">
+              <div class="tl-mk">${mk}</div>
+              <div class="tl-info">Bloom L${bl} &middot; ${enLabel(en)}</div>
+            </div>
+            <div class="sesi-pill pill-${ec}">${en}%</div>
+          </div>
+          <button onclick="toggleAlasan('${id}', this)" style="margin-top:.5rem;text-align:left;background:none;border:none;color:#7C5CFC;font-size:.75rem;font-weight:600;cursor:pointer;padding:0;">Kenapa jam ini? ▾</button>
+          <div id="${id}" class="hidden" style="margin-top:.4rem;font-size:.78rem;color:#78716C;line-height:1.5;background:#FAF9F7;border-radius:8px;padding:.6rem .75rem;">
+            ${alasanSesi(mk, jam, en, bl)}
+          </div>
+        </div>
+      </div>`;
+    }).join('')}
+    </div>
+    <div class="mt-4 p-4 bg-stone-50 rounded-xl text-sm text-stone-400 leading-relaxed border border-stone-100">
+      Total ${sorted.length} sesi di hari ${hari}. 
+      Urutan sudah dioptimalkan sesuai kurva energi kognitifmu.
+    </div>
+  `;
+}
+
+function switchView(view) {
+  const isMingguan = view === 'mingguan';
+  document.getElementById('view-mingguan').classList.toggle('hidden', !isMingguan);
+  document.getElementById('view-harian').classList.toggle('hidden', isMingguan);
+  document.getElementById('tab-mingguan').className = `view-tab ${isMingguan ? 'active' : ''}`;
+  document.getElementById('tab-harian').className   = `view-tab ${!isMingguan ? 'active' : ''}`;
+}
+
+async function doDownloadPDF() {
+  try { await downloadPDF(); }
+  catch(e) { alert(e.message); }
+}
+
+async function doRegenerate() {
+  const inputRaw = localStorage.getItem('cs_input');
+  if (!inputRaw) {
+    // input lama gak ketemu (misal buka dari device/browser lain) → arahkan isi ulang manual
+    window.location.href = 'input.html';
+    return;
+  }
+  const btn = document.getElementById('btn-regenerate');
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ Membuat ulang...';
+  try {
+    resultData = await generateJadwal(JSON.parse(inputRaw));
+    renderAll();
+  } catch(e) {
+    alert(e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+}
+
+function buildWallpaper() {
+  const jadwal = resultData.jadwal;
+  const hariAda = HARI_ORDER.filter(h => jadwal[h] && jadwal[h].length > 0);
+  const HARI_SINGKAT = { Senin:'SEN', Selasa:'SEL', Rabu:'RAB', Kamis:'KAM', Jumat:'JUM', Sabtu:'SAB', Minggu:'MIN' };
+
+  // Statistik header & footer — semua dihitung dari data asli, gak ada yang dikarang
+  const totalKelas = hariAda.reduce((sum, h) => sum + jadwal[h].length, 0);
+  const hariBelajar = hariAda.length;
+  const matkulUnik = new Set();
+  hariAda.forEach(h => jadwal[h].forEach(([, mk]) => matkulUnik.add(mk)));
+
+  document.getElementById('wp-subtitle').textContent =
+    `${totalKelas} sesi minggu ini · ${hariBelajar} hari belajar`;
+
+  // Strip pil hari (Sen–Min), titik oranye kalau hari itu ada sesi
+  document.getElementById('wp-pillrow').innerHTML = HARI_ORDER.map(h => `
+    <div class="wp-pill">
+      <div class="wp-pill-day">${HARI_SINGKAT[h]}</div>
+      <div class="wp-pill-dot ${jadwal[h] && jadwal[h].length ? '' : 'empty'}"></div>
+    </div>
+  `).join('');
+
+  // Warna aksen per tingkat energi — dipetakan ke skema warna desain baru
+  const accentColor = { peak:'#DE5E2B', good:'#4C6FDC', mid:'#8A6BB0', low:'#4F9C6D' };
+  const chipStyle = {
+    peak: 'background:#FCEBE2;color:#B84A21;',
+    good: 'background:#E7ECFC;color:#3453C4;',
+    mid:  'background:#EFE7F7;color:#6B4C94;',
+    low:  'background:#E5F2EA;color:#357252;',
+  };
+
+  document.getElementById('wp-week').innerHTML = hariAda.map(hari => {
+    const sesi = [...jadwal[hari]].sort((a,b) => a[0]-b[0]);
+    const rows = sesi.map(([jam, mk, en], i) => {
+      const ec = enClass(en);
+      return `
+        <div class="wp-card" style="--accent:${accentColor[ec]};">
+          <span class="wp-badge">${i + 1}</span>
+          <div class="wp-jam">${String(jam).padStart(2,'0')}.00</div>
+          <div class="wp-mk">${mk}</div>
+          <div class="wp-chip" style="${chipStyle[ec]}">${enLabel(en)}</div>
+        </div>`;
+    }).join('');
+    return `
+      <div class="wp-day-block">
+        <div class="wp-day-header">
+          <span class="wp-day-name">🗓️ ${hari}</span>
+          <span class="wp-day-line"></span>
+        </div>
+        ${rows}
+      </div>`;
+  }).join('');
+
+  // Footer statistik
+  document.getElementById('wp-stats').innerHTML = `
+    <div class="wp-stat">
+      <div class="wp-stat-icon">📝</div>
+      <div class="wp-stat-num">${totalKelas}</div>
+      <div class="wp-stat-label">Total Kelas</div>
+    </div>
+    <div class="wp-stat">
+      <div class="wp-stat-icon">📅</div>
+      <div class="wp-stat-num">${hariBelajar}</div>
+      <div class="wp-stat-label">Hari Belajar</div>
+    </div>
+    <div class="wp-stat">
+      <div class="wp-stat-icon">🎨</div>
+      <div class="wp-stat-num">${matkulUnik.size}</div>
+      <div class="wp-stat-label">Mata Kuliah</div>
+    </div>
+  `;
+}
+
+async function doSavePNG() {
+  try {
+    buildWallpaper();
+    await document.fonts.ready;
+    await new Promise(r => setTimeout(r, 100)); // kasih waktu browser repaint
+    const el = document.getElementById('wallpaper-template');
+    const canvas = await html2canvas(el, { scale: 2.7 });
+    canvas.toBlob(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'jadwal_chronostudy.png';
+      a.click(); URL.revokeObjectURL(url);
+    });
+  } catch(e) { alert(e.message); }
+}
+
+function openPomodoro() {
+  const frame = document.getElementById('pomodoro-frame');
+  if (frame.src === 'about:blank') {
+    frame.src = 'pomodoro.html'; // lazy load
+    frame.onload = () => {
+      try {
+        // Lapis pengaman tambahan: paksa sembunyiin scrollbar langsung dari dalam dokumen iframe
+        const doc = frame.contentDocument;
+        doc.documentElement.style.overflow = 'hidden';
+        doc.body.style.overflow = 'hidden';
+      } catch (e) { /* abaikan kalau gagal akses, CSS di pomodoro.html sudah cukup */ }
+    };
+  }
+  document.getElementById('pomodoro-backdrop').classList.remove('hidden');
+  document.body.style.overflow = 'hidden'; // kunci scroll halaman result.html di belakang modal
+}
+
+function closePomodoro(e) {
+  document.getElementById('pomodoro-backdrop').classList.add('hidden');
+  document.body.style.overflow = ''; // buka lagi scroll halaman result.html
+}
+
+loadResult();
+</script>
+</body>
+</html>

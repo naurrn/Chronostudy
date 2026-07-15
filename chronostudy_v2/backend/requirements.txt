@@ -1,0 +1,10 @@
+fastapi==0.111.0
+uvicorn[standard]==0.30.0
+pydantic[email]==2.13.4
+numpy==1.26.4
+pygad==3.3.1
+deap==1.4.1
+reportlab==4.2.0
+python-multipart==0.0.9
+python-dotenv==1.0.1
+google-genai==2.11.0

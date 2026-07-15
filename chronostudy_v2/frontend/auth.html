@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Masuk / Daftar — ChronoStudy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root{--cream:#FAF7F4;--dark:#1C1917;--violet:#7C5CFC;--lavender:#C8B8FF;
+    --card:#F0EBE3;--amber:#E8D5B0;--muted:#78716C;--border:#E7E0D8;}
+  body{background:var(--cream);color:var(--dark);font-family:'DM Sans',sans-serif;min-height:100vh;
+    display:flex;align-items:center;justify-content:center;padding:2rem;}
+  .font-display{font-family:'Playfair Display',serif;}
+  .card{background:#fff;border:1px solid var(--border);border-radius:24px;padding:2.5rem;
+    width:100%;max-width:440px;box-shadow:0 4px 24px rgba(28,25,23,.06);}
+  .tab-btn{flex:1;padding:.6rem;border-radius:10px;font-weight:500;font-size:.9rem;
+    cursor:pointer;transition:all .2s;border:none;font-family:'DM Sans',sans-serif;}
+  .tab-btn.active{background:var(--violet);color:#fff;}
+  .tab-btn.inactive{background:transparent;color:var(--muted);}
+  .tab-btn.inactive:hover{background:var(--card);}
+  .form-label{display:block;font-size:.82rem;font-weight:500;color:var(--muted);margin-bottom:5px;}
+  .form-input{width:100%;padding:.7rem 1rem;border:1.5px solid var(--border);border-radius:12px;
+    font-family:'DM Sans',sans-serif;font-size:.9rem;background:#fff;outline:none;
+    transition:border-color .2s;box-sizing:border-box;}
+  .form-input:focus{border-color:var(--violet);}
+  .btn-primary{width:100%;background:var(--violet);color:#fff;border:none;border-radius:12px;
+    padding:.8rem;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.95rem;
+    cursor:pointer;transition:opacity .15s,transform .1s;margin-top:.5rem;}
+  .btn-primary:hover{opacity:.88;transform:translateY(-1px);}
+  .btn-primary:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+  .alert{padding:.75rem 1rem;border-radius:10px;font-size:.875rem;margin-bottom:1rem;}
+  .alert-error{background:#FEE2E2;color:#991B1B;border:1px solid #FCA5A5;}
+  .alert-success{background:#D1FAE5;color:#065F46;border:1px solid #6EE7B7;}
+  .divider{display:flex;align-items:center;gap:10px;margin:.75rem 0;}
+  .divider hr{flex:1;border:none;border-top:1px solid var(--border);}
+  .divider span{font-size:.75rem;color:var(--muted);}
+</style>
+</head>
+<body>
+<div class="card">
+  <a href="index.html" class="flex items-center gap-2 mb-6 text-stone-400 hover:text-stone-600 text-sm transition-colors">
+    ← Kembali
+  </a>
+  <h1 class="font-display text-2xl mb-1">ChronoStudy</h1>
+  <p class="text-stone-400 text-sm mb-6">Jadwal belajar yang menyesuaikan ritme biologismu</p>
+
+  <!-- TABS -->
+  <div class="flex gap-1 bg-stone-100 p-1 rounded-xl mb-6">
+    <button class="tab-btn active" id="tab-login" onclick="switchTab('login')">Masuk</button>
+    <button class="tab-btn inactive" id="tab-register" onclick="switchTab('register')">Daftar</button>
+  </div>
+
+  <div id="alert-box" class="hidden"></div>
+
+  <!-- LOGIN FORM -->
+  <div id="form-login">
+    <div class="mb-4">
+      <label class="form-label">Email</label>
+      <input class="form-input" id="login-email" type="email" placeholder="kamu@email.com">
+    </div>
+    <div class="mb-1">
+      <label class="form-label">Password</label>
+      <input class="form-input" id="login-pw" type="password" placeholder="••••••••">
+    </div>
+    <button class="btn-primary" id="btn-login" onclick="doLogin()">Masuk ke akun →</button>
+    <div class="divider mt-5"><hr><span>Belum punya akun?</span><hr></div>
+    <p class="text-center text-sm text-stone-400">
+      <span class="text-violet-600 cursor-pointer hover:underline" onclick="switchTab('register')">Daftar sekarang</span>
+    </p>
+  </div>
+
+  <!-- REGISTER FORM -->
+  <div id="form-register" class="hidden">
+    <div class="mb-4">
+      <label class="form-label">Nama lengkap</label>
+      <input class="form-input" id="reg-nama" type="text" placeholder="Nama kamu">
+    </div>
+    <div class="mb-4">
+      <label class="form-label">Email</label>
+      <input class="form-input" id="reg-email" type="email" placeholder="kamu@email.com">
+    </div>
+    <div class="mb-4">
+      <label class="form-label">Password</label>
+      <input class="form-input" id="reg-pw" type="password" placeholder="Min. 6 karakter">
+    </div>
+    <div class="mb-1">
+      <label class="form-label">Konfirmasi password</label>
+      <input class="form-input" id="reg-pw2" type="password" placeholder="Ulangi password">
+    </div>
+    <button class="btn-primary" id="btn-register" onclick="doRegister()">Buat akun →</button>
+    <div class="divider mt-5"><hr><span>Sudah punya akun?</span><hr></div>
+    <p class="text-center text-sm text-stone-400">
+      <span class="text-violet-600 cursor-pointer hover:underline" onclick="switchTab('login')">Masuk sekarang</span>
+    </p>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+// Auto-tab from hash
+if (window.location.hash === '#register') switchTab('register');
+
+// Already logged in
+if (getToken() && getUser()) {
+  const u = getUser();
+  window.location.href = u.skor_meq ? 'input.html' : 'meq.html';
+}
+
+function switchTab(tab) {
+  document.getElementById('form-login').classList.toggle('hidden', tab !== 'login');
+  document.getElementById('form-register').classList.toggle('hidden', tab !== 'register');
+  document.getElementById('tab-login').className = `tab-btn ${tab === 'login' ? 'active' : 'inactive'}`;
+  document.getElementById('tab-register').className = `tab-btn ${tab === 'register' ? 'active' : 'inactive'}`;
+  hideAlert();
+}
+
+function showAlert(msg, type='error') {
+  const box = document.getElementById('alert-box');
+  box.className = `alert alert-${type}`;
+  box.textContent = msg;
+  box.classList.remove('hidden');
+}
+function hideAlert() {
+  document.getElementById('alert-box').classList.add('hidden');
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pw = document.getElementById('login-pw').value;
+  if (!email || !pw) { showAlert('Isi semua field ya!'); return; }
+  const btn = document.getElementById('btn-login');
+  btn.disabled = true; btn.textContent = 'Memproses...';
+  try {
+    const user = await login(email, pw);
+    window.location.href = user.skor_meq ? 'input.html' : 'meq.html';
+  } catch(e) { showAlert(e.message); btn.disabled=false; btn.textContent='Masuk ke akun →'; }
+}
+
+async function doRegister() {
+  const nama = document.getElementById('reg-nama').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pw = document.getElementById('reg-pw').value;
+  const pw2 = document.getElementById('reg-pw2').value;
+  if (!nama||!email||!pw||!pw2) { showAlert('Isi semua field ya!'); return; }
+  if (pw !== pw2) { showAlert('Password tidak cocok!'); return; }
+  if (pw.length < 6) { showAlert('Password minimal 6 karakter.'); return; }
+  const btn = document.getElementById('btn-register');
+  btn.disabled = true; btn.textContent = 'Membuat akun...';
+  try {
+    await register(nama, email, pw);
+    showAlert('Akun berhasil dibuat! Silakan masuk.', 'success');
+    setTimeout(() => switchTab('login'), 1500);
+  } catch(e) { showAlert(e.message); btn.disabled=false; btn.textContent='Buat akun →'; }
+}
+
+// Enter key support
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const tab = document.getElementById('form-login').classList.contains('hidden') ? 'register' : 'login';
+  if (tab === 'login') doLogin(); else doRegister();
+});
+</script>
+</body>
+</html>

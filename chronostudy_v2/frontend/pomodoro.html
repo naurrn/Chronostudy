@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Circadian Pomodoro — ChronoStudy</title>
+<style>
+  /* ── VARIABEL & RESET ─────────────────────────────────── */
+  :root {
+    --bg:        #F5F3FF;
+    --card:      #FFFFFF;
+    --border:    #E4DEFC;
+    --purple:    #7C5CBF;
+    --purple-l:  #A98FD8;
+    --purple-bg: #EDE8FA;
+    --green:     #4BAF82;
+    --green-bg:  #E4F5EE;
+    --amber:     #E09B3C;
+    --amber-bg:  #FDF0DC;
+    --pink:      #D96B8A;
+    --pink-bg:   #FAE8ED;
+    --text:      #2C2A4A;
+    --muted:     #7B7A99;
+    --shadow:    0 4px 24px rgba(124,92,191,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    overflow: hidden; /* body sendiri gak pernah scroll, biar gak dobel sama .container */
+  }
+  body {
+    font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+    background: var(--bg); color: var(--text);
+    height: 100vh; display: flex;
+    align-items: center; justify-content: center;
+    padding: 1rem;
+  }
+
+  /* ── LAYOUT ──────────────────────────────────────────── */
+  .container {
+    max-width: 480px; width: 100%;
+    max-height: 100%; overflow-y: auto; overflow-x: hidden;
+    scrollbar-width: none;       /* Firefox: sembunyiin scrollbar, tetap bisa discroll */
+    -ms-overflow-style: none;    /* IE/Edge lama */
+  }
+  .container::-webkit-scrollbar { display: none; width: 0; height: 0; } /* Chrome/Safari/Edge baru */
+
+  .brand {
+    text-align: center; margin-bottom: 1.25rem;
+    font-size: 1rem; font-weight: 700; color: var(--purple);
+    letter-spacing: .02em;
+  }
+
+  .card {
+    background: var(--card); border: 1.5px solid var(--border);
+    border-radius: 20px; padding: 2rem;
+    box-shadow: var(--shadow); margin-bottom: 1rem;
+  }
+
+  /* ── KRONOTIPE BADGE ─────────────────────────────────── */
+  .krono-badge {
+    display: flex; align-items: center; gap: 10px;
+    border-radius: 12px; padding: 10px 14px;
+    margin-bottom: 1.25rem; font-weight: 600; font-size: .875rem;
+  }
+  .krono-pagi   { background: var(--amber-bg); color: var(--amber);  border: 1.5px solid #F0D5A0; }
+  .krono-inter  { background: var(--purple-bg);color: var(--purple); border: 1.5px solid #C8B8EE; }
+  .krono-malam  { background: #E8F0FA;         color: #5B8EDB;       border: 1.5px solid #B0C8F0; }
+
+  /* ── ENERGY INDICATOR ───────────────────────────────── */
+  .energy-section { margin-bottom: 1.5rem; }
+  .energy-label {
+    font-size: .8rem; font-weight: 600; color: var(--muted);
+    margin-bottom: .5rem; text-transform: uppercase; letter-spacing: .05em;
+  }
+  .energy-bar-wrap {
+    height: 10px; background: var(--border); border-radius: 99px;
+    overflow: hidden; margin-bottom: .4rem;
+  }
+  .energy-bar {
+    height: 100%; border-radius: 99px;
+    transition: width .8s ease, background .8s ease;
+  }
+  .energy-info {
+    display: flex; justify-content: space-between;
+    font-size: .78rem; color: var(--muted);
+  }
+
+  /* ── TIMER RING ──────────────────────────────────────── */
+  .timer-section { text-align: center; margin-bottom: 1.75rem; }
+
+  .ring-wrap {
+    position: relative; width: 200px; height: 200px;
+    margin: 0 auto 1rem;
+  }
+  .ring-svg { transform: rotate(-90deg); }
+  .ring-track { fill: none; stroke: var(--border); stroke-width: 8; }
+  .ring-progress {
+    fill: none; stroke-width: 8;
+    stroke-linecap: round;
+    stroke-dasharray: 565.48;
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset .5s linear, stroke .5s ease;
+  }
+
+  .timer-center {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+  .timer-time {
+    font-size: 2.4rem; font-weight: 800;
+    color: var(--text); line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .timer-mode {
+    font-size: .75rem; font-weight: 600;
+    color: var(--muted); margin-top: 4px;
+    text-transform: uppercase; letter-spacing: .06em;
+  }
+
+  /* ── SESSION INFO ────────────────────────────────────── */
+  .session-info {
+    display: flex; justify-content: center; gap: 20px;
+    font-size: .82rem; color: var(--muted); margin-bottom: 1.25rem;
+  }
+  .session-info span b { color: var(--text); }
+
+  /* ── CURRENT MATKUL ──────────────────────────────────── */
+  .matkul-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--purple-bg); color: var(--purple);
+    border: 1.5px solid #C8B8EE; border-radius: 999px;
+    padding: 5px 14px; font-size: .82rem; font-weight: 600;
+    margin-bottom: 1rem;
+  }
+
+  /* ── BUTTONS ────────────────────────────────────────── */
+  .btn-row { display: flex; gap: 10px; }
+  .btn {
+    flex: 1; padding: .65rem 1rem; border-radius: 10px;
+    border: none; font-family: inherit;
+    font-size: .9rem; font-weight: 600;
+    cursor: pointer; transition: all .15s;
+  }
+  .btn-primary {
+    background: var(--purple); color: #fff;
+    box-shadow: 0 2px 8px rgba(124,92,191,0.25);
+  }
+  .btn-primary:hover { background: #6A4AAF; }
+  .btn-secondary {
+    background: var(--card); color: var(--purple);
+    border: 1.5px solid var(--border);
+  }
+  .btn-secondary:hover { background: var(--purple-bg); border-color: var(--purple-l); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+
+  /* ── SESI LIST ───────────────────────────────────────── */
+  .sesi-card { padding: 1.25rem 1.5rem; }
+  .sesi-title {
+    font-weight: 700; font-size: .95rem; margin-bottom: .75rem;
+  }
+  .sesi-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0; border-bottom: 1px solid var(--border);
+    font-size: .85rem;
+  }
+  .sesi-item:last-child { border-bottom: none; }
+  .sesi-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .sesi-done .sesi-dot { background: var(--green); }
+  .sesi-active .sesi-dot { background: var(--purple); box-shadow: 0 0 0 3px var(--purple-bg); }
+  .sesi-pending .sesi-dot { background: var(--border); }
+  .sesi-mk { flex: 1; }
+  .sesi-dur { font-size: .75rem; color: var(--muted); }
+  .sesi-status { font-size: .72rem; font-weight: 600; }
+  .sesi-done   .sesi-status { color: var(--green); }
+  .sesi-active .sesi-status { color: var(--purple); }
+  .sesi-pending .sesi-status { color: var(--muted); }
+
+  /* ── MOTIVASI ────────────────────────────────────────── */
+  .motivasi {
+    text-align: center; font-size: .82rem;
+    color: var(--muted); margin-top: .75rem;
+    min-height: 1.2rem; font-style: italic;
+  }
+
+  /* ── COMPLETE STATE ─────────────────────────────────── */
+  .complete-card {
+    text-align: center; padding: 2rem;
+  }
+  .complete-icon { font-size: 3rem; margin-bottom: .75rem; }
+  .complete-title { font-size: 1.25rem; font-weight: 800; margin-bottom: .4rem; }
+  .complete-sub { font-size: .875rem; color: var(--muted); }
+
+  /* ── SETUP ───────────────────────────────────────────── */
+  .setup-section label {
+    display: block; font-size: .82rem; font-weight: 600;
+    color: var(--muted); margin-bottom: .4rem;
+  }
+  .setup-section select, .setup-section input {
+    width: 100%; padding: .55rem .9rem;
+    border: 1.5px solid var(--border); border-radius: 9px;
+    font-family: inherit; font-size: .875rem; color: var(--text);
+    background: var(--bg); margin-bottom: .9rem;
+    outline: none;
+  }
+  .setup-section select:focus, .setup-section input:focus {
+    border-color: var(--purple);
+  }
+  .setup-title { font-weight: 800; font-size: 1.1rem; margin-bottom: 1rem; }
+  .hint { font-size: .76rem; color: var(--muted); margin-top: -.5rem; margin-bottom: .9rem; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="brand">🧬 ChronoStudy — Circadian Pomodoro</div>
+
+  <!-- ── SETUP ── -->
+  <div class="card" id="setup-card">
+    <div class="setup-title">Atur Sesi Belajarmu ⏱️</div>
+
+    <div class="setup-section">
+      <label>Kronotipe kamu</label>
+      <select id="sel-krono">
+        <option value="pagi">🌅 Tipe Pagi (MEQ 59–86)</option>
+        <option value="inter" selected>⚖️ Intermediate (MEQ 42–58)</option>
+        <option value="malam">🌙 Tipe Malam (MEQ 16–41)</option>
+      </select>
+
+      <label>Mata kuliah yang mau dipelajari (pisah koma)</label>
+      <input type="text" id="inp-matkul"
+             placeholder="Kalkulus, Pemrograman, Bahasa Inggris"
+             value="Kalkulus, Pemrograman, Bahasa Inggris">
+      <div class="hint">Urutkan dari yang paling berat ke paling ringan biar sistem bisa prioritaskan dengan baik.</div>
+    </div>
+
+    <button class="btn btn-primary" onclick="mulaiSetup()">Mulai Sesi →</button>
+  </div>
+
+  <!-- ── TIMER (tersembunyi dulu) ── -->
+  <div id="timer-card" class="card" style="display:none">
+
+    <!-- Kronotipe badge -->
+    <div class="krono-badge" id="krono-badge"></div>
+
+    <!-- Energi sirkadian saat ini -->
+    <div class="energy-section">
+      <div class="energy-label">Energi kognitif sekarang (jam <span id="jam-skrg"></span>)</div>
+      <div class="energy-bar-wrap">
+        <div class="energy-bar" id="energy-bar"></div>
+      </div>
+      <div class="energy-info">
+        <span id="energy-pct"></span>
+        <span id="energy-label-txt"></span>
+      </div>
+    </div>
+
+    <!-- Timer ring -->
+    <div class="timer-section">
+      <div class="matkul-chip">📚 <span id="matkul-now">—</span></div>
+      <div class="ring-wrap">
+        <svg class="ring-svg" width="200" height="200" viewBox="0 0 200 200">
+          <circle class="ring-track" cx="100" cy="100" r="90"/>
+          <circle class="ring-progress" id="ring" cx="100" cy="100" r="90"/>
+        </svg>
+        <div class="timer-center">
+          <div class="timer-time" id="timer-display">25:00</div>
+          <div class="timer-mode" id="timer-mode">FOKUS</div>
+        </div>
+      </div>
+
+      <div class="session-info">
+        <span>Sesi <b id="sesi-ke">1</b> dari <b id="sesi-total">—</b></span>
+        <span>Durasi: <b id="durasi-info">—</b> mnt</span>
+        <span>Istirahat: <b id="jeda-info">—</b> mnt</span>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btn-start" onclick="toggleTimer()">▶ Mulai</button>
+        <button class="btn btn-secondary" id="btn-skip" onclick="skipSesi()">⏭ Lewati</button>
+        <button class="btn btn-secondary" onclick="resetSetup()">↩ Reset</button>
+      </div>
+
+      <div class="motivasi" id="motivasi"></div>
+    </div>
+  </div>
+
+  <!-- Daftar sesi -->
+  <div class="card sesi-card" id="sesi-list-card" style="display:none">
+    <div class="sesi-title">📋 Daftar Sesi</div>
+    <div id="sesi-list"></div>
+  </div>
+
+  <!-- Complete state -->
+  <div class="card complete-card" id="complete-card" style="display:none">
+    <div class="complete-icon">🎉</div>
+    <div class="complete-title">Semua sesi selesai!</div>
+    <div class="complete-sub">Kamu sudah belajar selama <b id="total-waktu">—</b> menit hari ini. Kerja bagus!</div>
+    <br>
+    <button class="btn btn-primary" onclick="resetSetup()">Mulai sesi baru</button>
+  </div>
+</div>
+
+<script>
+// ── KURVA KOGNITIF ───────────────────────────────────────
+const KURVA = {
+  pagi:  [.10,.10,.10,.10,.15,.30,.55,.80,.95,1.0,.95,.85,.70,.55,.50,.55,.50,.40,.30,.25,.20,.15,.10,.10],
+  inter: [.10,.10,.10,.10,.10,.20,.35,.55,.75,.90,1.0,.95,.80,.65,.60,.70,.75,.65,.55,.45,.35,.25,.15,.10],
+  malam: [.15,.10,.10,.10,.10,.10,.15,.25,.40,.55,.65,.70,.65,.60,.65,.75,.85,.90,.95,1.0,.95,.85,.65,.40],
+};
+
+const KRONO_INFO = {
+  pagi:  { label:'Tipe Pagi',   emoji:'🌅', cls:'krono-pagi' },
+  inter: { label:'Intermediate',emoji:'⚖️', cls:'krono-inter' },
+  malam: { label:'Tipe Malam',  emoji:'🌙', cls:'krono-malam' },
+};
+
+const MOTIVASI = {
+  tinggi: ['Waktunya gaspol! 🚀','Energimu lagi di puncak, maksimalin!','Perfect timing buat matkul berat 💪'],
+  sedang: ['Tetap fokus, kamu bisa!','Jangan lupa minum air putih ya 💧','Satu sesi lagi, kamu bisa!'],
+  rendah: ['Energi agak rendah, tapi satu sesi singkat oke!','Ambil napas, pelan-pelan aja 🌿','Matkul yang ringan dulu ya 😊'],
+};
+
+// Durasi adaptif berdasarkan energi
+function getDurasi(energiPct) {
+  if (energiPct >= 80) return { fokus: 45, jeda: 10, level: 'tinggi' };
+  if (energiPct >= 50) return { fokus: 30, jeda:  7, level: 'sedang' };
+  return                       { fokus: 20, jeda:  5, level: 'rendah' };
+}
+
+function getEnergiColor(pct) {
+  if (pct >= 70) return '#4BAF82';
+  if (pct >= 40) return '#E09B3C';
+  return '#D96B8A';
+}
+
+// ── STATE ────────────────────────────────────────────────
+let state = {
+  kronotipe: 'inter',
+  matkulList: [],
+  sesiList: [],       // [{mk, fokus, jeda, status: 'pending'|'active'|'done'}]
+  sesiIdx: 0,
+  isBreak: false,
+  isRunning: false,
+  secondsLeft: 0,
+  totalDone: 0,       // total menit belajar
+  interval: null,
+};
+
+// ── SETUP ────────────────────────────────────────────────
+function mulaiSetup() {
+  const krono = document.getElementById('sel-krono').value;
+  const raw   = document.getElementById('inp-matkul').value;
+  const matkul = raw.split(',').map(s=>s.trim()).filter(Boolean);
+
+  if (!matkul.length) { alert('Isi minimal 1 mata kuliah!'); return; }
+
+  const jam = new Date().getHours();
+  const energiPct = Math.round(KURVA[krono][jam] * 100);
+  const { fokus, jeda } = getDurasi(energiPct);
+
+  // Bangun daftar sesi (tiap matkul = 1 sesi fokus)
+  state = {
+    kronotipe: krono, matkulList: matkul, isBreak: false,
+    isRunning: false, totalDone: 0, interval: null,
+    sesiIdx: 0,
+    sesiList: matkul.map(mk => ({
+      mk, fokus, jeda, status: 'pending'
+    })),
+    secondsLeft: fokus * 60,
+  };
+  state.sesiList[0].status = 'active';
+
+  document.getElementById('setup-card').style.display  = 'none';
+  document.getElementById('timer-card').style.display  = '';
+  document.getElementById('sesi-list-card').style.display = '';
+
+  renderUI();
+}
+
+function resetSetup() {
+  clearInterval(state.interval);
+  state = {};
+  document.getElementById('setup-card').style.display    = '';
+  document.getElementById('timer-card').style.display    = 'none';
+  document.getElementById('sesi-list-card').style.display = 'none';
+  document.getElementById('complete-card').style.display  = 'none';
+}
+
+// ── TIMER LOGIC ──────────────────────────────────────────
+function toggleTimer() {
+  if (state.isRunning) {
+    clearInterval(state.interval);
+    state.isRunning = false;
+    document.getElementById('btn-start').textContent = '▶ Lanjut';
+  } else {
+    state.isRunning = true;
+    document.getElementById('btn-start').textContent = '⏸ Jeda';
+    state.interval = setInterval(tick, 1000);
+  }
+}
+
+function tick() {
+  state.secondsLeft--;
+  renderTimer();
+
+  if (state.secondsLeft <= 0) {
+    clearInterval(state.interval);
+    state.isRunning = false;
+
+    if (!state.isBreak) {
+      // Selesai sesi fokus → mulai istirahat
+      const cur = state.sesiList[state.sesiIdx];
+      state.totalDone += cur.fokus;
+      state.isBreak = true;
+      state.secondsLeft = cur.jeda * 60;
+      notif('⏸ Waktunya istirahat!', `${cur.jeda} menit istirahat dulu.`);
+      renderUI(); toggleTimer();
+    } else {
+      // Selesai istirahat → next sesi
+      state.isBreak = false;
+      nextSesi();
+    }
+  }
+}
+
+function skipSesi() {
+  clearInterval(state.interval);
+  state.isRunning = false;
+  if (state.isBreak) {
+    state.isBreak = false;
+    nextSesi();
+  } else {
+    nextSesi();
+  }
+}
+
+function nextSesi() {
+  state.sesiList[state.sesiIdx].status = 'done';
+  state.sesiIdx++;
+
+  if (state.sesiIdx >= state.sesiList.length) {
+    // Semua sesi selesai
+    document.getElementById('timer-card').style.display     = 'none';
+    document.getElementById('sesi-list-card').style.display = 'none';
+    document.getElementById('complete-card').style.display  = '';
+    document.getElementById('total-waktu').textContent = state.totalDone;
+    return;
+  }
+
+  // Update durasi sesi berikutnya berdasarkan energi jam sekarang
+  const jam = new Date().getHours();
+  const krono = state.kronotipe;
+  const energiPct = Math.round(KURVA[krono][jam] * 100);
+  const { fokus, jeda } = getDurasi(energiPct);
+
+  state.sesiList[state.sesiIdx].fokus  = fokus;
+  state.sesiList[state.sesiIdx].jeda   = jeda;
+  state.sesiList[state.sesiIdx].status = 'active';
+  state.secondsLeft = fokus * 60;
+
+  renderUI();
+  notif('🎯 Sesi berikutnya!', `Siap belajar ${state.sesiList[state.sesiIdx].mk}?`);
+}
+
+// ── RENDER ───────────────────────────────────────────────
+function renderUI() {
+  const jam      = new Date().getHours();
+  const krono    = state.kronotipe;
+  const ki       = KRONO_INFO[krono];
+  const energiPct= Math.round(KURVA[krono][jam] * 100);
+  const { fokus, jeda, level } = getDurasi(energiPct);
+  const cur      = state.sesiList[state.sesiIdx] || {};
+
+  // Badge kronotipe
+  const badge = document.getElementById('krono-badge');
+  badge.className = `krono-badge ${ki.cls}`;
+  badge.innerHTML = `${ki.emoji} ${ki.label} &nbsp;·&nbsp; Jam ${jam.toString().padStart(2,'0')}.00`;
+
+  // Energy bar
+  const col = getEnergiColor(energiPct);
+  document.getElementById('energy-bar').style.width = energiPct + '%';
+  document.getElementById('energy-bar').style.background = col;
+  document.getElementById('energy-pct').textContent = energiPct + '%';
+  document.getElementById('jam-skrg').textContent = jam.toString().padStart(2,'0') + '.00';
+  const energyLabels = { tinggi:'⚡ Energi tinggi — sesi panjang', sedang:'⚡ Energi sedang — sesi normal', rendah:'💤 Energi rendah — sesi singkat' };
+  document.getElementById('energy-label-txt').textContent = energyLabels[level];
+
+  // Matkul aktif
+  document.getElementById('matkul-now').textContent = cur.mk || '—';
+
+  // Session info
+  document.getElementById('sesi-ke').textContent    = state.sesiIdx + 1;
+  document.getElementById('sesi-total').textContent = state.sesiList.length;
+  document.getElementById('durasi-info').textContent = cur.fokus || fokus;
+  document.getElementById('jeda-info').textContent   = cur.jeda  || jeda;
+
+  // Mode label
+  document.getElementById('timer-mode').textContent = state.isBreak ? 'ISTIRAHAT' : 'FOKUS';
+
+  // Motivasi
+  const pool = MOTIVASI[level];
+  document.getElementById('motivasi').textContent = pool[Math.floor(Math.random()*pool.length)];
+
+  // Ring color
+  document.getElementById('ring').style.stroke = state.isBreak ? '#4BAF82' : '#7C5CBF';
+
+  renderTimer();
+  renderSesiList();
+}
+
+function renderTimer() {
+  const cur = state.sesiList[state.sesiIdx] || {};
+  const totalSecs = state.isBreak ? (cur.jeda||5)*60 : (cur.fokus||25)*60;
+  const ratio     = state.secondsLeft / totalSecs;
+  const circumference = 565.48;
+
+  document.getElementById('ring').style.strokeDashoffset = circumference * (1 - ratio);
+
+  const m = Math.floor(state.secondsLeft / 60).toString().padStart(2,'0');
+  const s = (state.secondsLeft % 60).toString().padStart(2,'0');
+  document.getElementById('timer-display').textContent = `${m}:${s}`;
+}
+
+function renderSesiList() {
+  const list = document.getElementById('sesi-list');
+  list.innerHTML = state.sesiList.map((s,i) => `
+    <div class="sesi-item sesi-${s.status}">
+      <div class="sesi-dot"></div>
+      <div class="sesi-mk">${s.mk}</div>
+      <div class="sesi-dur">${s.fokus} mnt</div>
+      <div class="sesi-status">${s.status==='done'?'✓ Selesai':s.status==='active'?'▶ Aktif':'—'}</div>
+    </div>
+  `).join('');
+}
+
+// ── NOTIFIKASI ───────────────────────────────────────────
+function notif(title, body) {
+  if (Notification.permission === 'granted') {
+    new Notification(title, { body, icon: '🧬' });
+  } else if (Notification.permission !== 'denied') {
+    Notification.requestPermission().then(p => {
+      if (p === 'granted') new Notification(title, { body });
+    });
+  }
+}
+</script>
+</body>
+</html>

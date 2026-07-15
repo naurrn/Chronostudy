@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChronoStudy — Riwayat Jadwal</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital@0;1&family=DM+Sans:wght@400;500;600;700&family=DM+Mono&display=swap" rel="stylesheet">
+<link href="css/navbar.css" rel="stylesheet">
+<script src="js/api.js"></script>
+<script src="js/navbar.js"></script>
+<style>
+  :root{
+    --cream:#FAF7F4; --dark:#1C1917; --violet:#7C5CFC; --lavender:#C8B8FF;
+    --card:#F0EBE3; --amber:#E8D5B0; --border:#E7E1D8; --muted:#8A8378;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--cream);color:var(--dark);font-family:'DM Sans',sans-serif;}
+  main{max-width:64rem;margin:0 auto;padding:2.5rem 2.5rem 3rem;}
+  h1{font-family:'Playfair Display',serif;font-size:2rem;margin-bottom:.3rem;}
+  .sub{color:var(--muted);font-size:.95rem;margin-bottom:2rem;}
+
+  #list{display:grid;grid-template-columns:repeat(auto-fill, minmax(340px, 1fr));gap:1rem;}
+
+  .riwayat-card{display:flex;align-items:center;gap:1.1rem;background:#fff;
+    border:1px solid var(--border);border-radius:16px;padding:1.1rem 1.3rem;
+    text-decoration:none;color:inherit;transition:box-shadow .15s,transform .15s;}
+  .riwayat-card:hover{box-shadow:0 10px 26px -10px rgba(28,25,23,.15);transform:translateY(-2px);}
+
+  .rc-emoji{font-size:1.6rem;width:44px;height:44px;flex-shrink:0;border-radius:12px;
+    background:var(--card);display:flex;align-items:center;justify-content:center;}
+  .rc-body{flex:1;min-width:0;}
+  .rc-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px;}
+  .rc-kronotipe{font-weight:600;font-size:.95rem;}
+  .rc-tanggal{font-size:.78rem;color:var(--muted);font-family:'DM Mono',monospace;}
+  .rc-meta{font-size:.82rem;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap;}
+  .rc-meta b{color:var(--dark);font-weight:600;}
+  .rc-arrow{color:var(--muted);font-size:1.2rem;flex-shrink:0;}
+
+  .empty-state{text-align:center;padding:4rem 1rem;color:var(--muted);grid-column:1/-1;}
+  .empty-state a{color:var(--violet);font-weight:600;text-decoration:none;}
+  .skeleton{height:78px;border-radius:16px;background:linear-gradient(90deg,var(--card) 25%,#fff 37%,var(--card) 63%);
+    background-size:400% 100%;animation:shine 1.4s ease infinite;}
+  @keyframes shine{0%{background-position:100% 0}100%{background-position:0 0}}
+
+  footer{border-top:1px solid var(--border);margin-top:3rem;}
+  .footer-inner{max-width:78rem;margin:0 auto;padding:2rem 2.5rem;
+    display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;}
+  .footer-brand{font-family:'Playfair Display',serif;font-style:italic;font-size:1.05rem;color:var(--dark);}
+  .footer-links{display:flex;gap:1.5rem;flex-wrap:wrap;}
+  .footer-links a{color:var(--muted);font-size:.82rem;text-decoration:none;}
+  .footer-links a:hover{color:var(--violet);}
+  .footer-copy{font-size:.78rem;color:var(--muted);width:100%;text-align:center;padding-top:1rem;
+    border-top:1px solid var(--border);margin-top:.5rem;}
+</style>
+</head>
+<body>
+
+<div id="navbar-root"></div>
+
+<main>
+  <h1>Riwayat Jadwal</h1>
+  <p class="sub">Semua jadwal belajar yang pernah kamu buat, terbaru di atas.</p>
+  <div id="list"></div>
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <span class="footer-brand">ChronoStudy</span>
+    <div class="footer-links">
+      <a href="mailto:chronostudy.app@gmail.com">naurahan09@gmail.com</a>
+    </div>
+    <div class="footer-copy">© 2026 ChronoStudy — All right reserved, dibuat untuk keperluan penelitian.</div>
+  </div>
+</footer>
+
+<script>
+const KRONO_EMOJI = { 'Tipe Pagi': '🌅', 'Intermediate': '⚖️', 'Tipe Malam': '🌙' };
+
+function formatTanggal(iso) {
+  // SQLite CURRENT_TIMESTAMP nyimpen waktu dalam UTC, bukan lokal -- jadi
+  // string-nya HARUS ditandai 'Z' (UTC) sebelum di-parse, kalau nggak, browser
+  // bakal nganggep itu udah jam lokal (WIB) dan hasilnya geser 7 jam.
+  const d = new Date(iso.replace(' ', 'T') + 'Z');
+  return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+async function init() {
+  const user = requireAuth();
+  if (!user) return;
+  renderNavbar("riwayat");
+
+  const list = document.getElementById("list");
+  list.innerHTML = `<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>`;
+
+  let riwayat;
+  try {
+    riwayat = await getRiwayat();
+  } catch (e) {
+    list.innerHTML = `<div class="empty-state">Gagal memuat riwayat: ${e.message}</div>`;
+    return;
+  }
+
+  if (!riwayat || riwayat.length === 0) {
+    list.innerHTML = `
+      <div class="empty-state">
+        Belum ada jadwal yang pernah dibuat.<br>
+        <a href="input.html">Buat jadwal pertamamu →</a>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = riwayat.map(r => {
+    const emoji = KRONO_EMOJI[r.kronotipe] || '📅';
+    const fitBest = Math.max(r.fit_pygad, r.fit_deap).toFixed(1);
+    return `
+      <a class="riwayat-card" href="result.html?id=${r.id}">
+        <div class="rc-emoji">${emoji}</div>
+        <div class="rc-body">
+          <div class="rc-top">
+            <span class="rc-kronotipe">${r.kronotipe}</span>
+            <span class="rc-tanggal">· ${formatTanggal(r.created)}</span>
+          </div>
+          <div class="rc-meta">
+            <span>Skor MEQ: <b>${r.skor_meq}</b></span>
+            <span>Fitness terbaik: <b>${fitBest}</b></span>
+          </div>
+        </div>
+        <span class="rc-arrow">→</span>
+      </a>
+    `;
+  }).join("");
+}
+
+init();
+</script>
+
+</body>
+</html>

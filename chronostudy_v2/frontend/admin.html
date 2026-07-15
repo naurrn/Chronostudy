@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin — ChronoStudy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root{--cream:#FAF7F4;--dark:#1C1917;--violet:#7C5CFC;--border:#E7E0D8;--muted:#78716C;}
+  body{background:var(--cream);color:var(--dark);font-family:'DM Sans',sans-serif;min-height:100vh;}
+  .font-display{font-family:'Playfair Display',serif;}
+  .font-mono{font-family:'DM Mono',monospace;}
+  .card{background:#fff;border:1px solid var(--border);border-radius:20px;padding:2rem;}
+  .form-input{width:100%;padding:.7rem 1rem;border:1.5px solid var(--border);border-radius:12px;
+    font-family:'DM Sans',sans-serif;font-size:.9rem;background:#fff;outline:none;
+    transition:border-color .2s;box-sizing:border-box;}
+  .form-input:focus{border-color:var(--violet);}
+  .btn-primary{background:var(--violet);color:#fff;border:none;border-radius:12px;
+    padding:.75rem 2rem;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.9rem;
+    cursor:pointer;transition:opacity .15s;width:100%;margin-top:.5rem;}
+  .btn-primary:hover{opacity:.88;}
+  .btn-outline{background:transparent;border:1.5px solid var(--border);border-radius:10px;
+    padding:.5rem 1.25rem;font-size:.85rem;cursor:pointer;color:var(--muted);font-family:'DM Sans';}
+  th{background:#F9FAFB;padding:.65rem 1rem;text-align:left;font-size:.75rem;
+    font-weight:600;color:var(--muted);border-bottom:1px solid var(--border);}
+  td{padding:.7rem 1rem;font-size:.83rem;border-bottom:1px solid #F3F4F6;vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  .badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.72rem;font-weight:600;}
+  .badge-pygad{background:#EDE9FE;color:#5B21B6;}
+  .badge-deap{background:#D1FAE5;color:#065F46;}
+  .stat-card{background:#fff;border:1px solid var(--border);border-radius:16px;
+    padding:1.25rem;text-align:center;}
+  .stat-num{font-family:'DM Mono',monospace;font-size:1.75rem;color:var(--violet);font-weight:400;}
+  .stat-label{font-size:.78rem;color:var(--muted);margin-top:2px;}
+</style>
+</head>
+<body>
+
+<nav class="border-b border-stone-200 bg-white">
+  <div class="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
+    <span class="font-display text-xl">ChronoStudy <span class="text-stone-400 text-sm font-sans font-normal">Admin</span></span>
+    <button class="btn-outline" id="btn-logout" style="display:none" onclick="adminLogout()">Keluar</button>
+  </div>
+</nav>
+
+<!-- LOGIN -->
+<div id="admin-login" class="flex items-center justify-center min-h-[80vh] px-4">
+  <div class="card w-full max-w-sm">
+    <h2 class="font-display text-2xl mb-1">Akses Admin</h2>
+    <p class="text-stone-400 text-sm mb-6">Halaman ini hanya untuk peneliti.</p>
+    <div id="login-alert" class="hidden mb-4 p-3 bg-red-50 text-red-700 rounded-xl text-sm"></div>
+    <label class="block text-xs font-medium text-stone-500 mb-1">Password admin</label>
+    <input class="form-input" type="password" id="admin-pw" placeholder="••••••••">
+    <button class="btn-primary" onclick="doAdminLogin()">Masuk sebagai admin</button>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="admin-dashboard" class="hidden max-w-5xl mx-auto px-6 py-8">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="font-display text-2xl mb-1">Data Komparasi Algoritma</h1>
+      <p class="text-stone-400 text-sm">Perbandingan fitness PyGAD vs DEAP dari seluruh pengguna</p>
+    </div>
+    <button class="btn-outline" onclick="loadData()">↻ Refresh</button>
+  </div>
+
+  <!-- STATISTIK -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="stats-grid">
+    <div class="stat-card"><div class="stat-num" id="stat-total">—</div><div class="stat-label">Total jadwal dibuat</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-pygad">—</div><div class="stat-label">PyGAD menang</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-deap">—</div><div class="stat-label">DEAP menang</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-avg-fit">—</div><div class="stat-label">Avg fitness (keduanya)</div></div>
+  </div>
+
+  <!-- RATA-RATA DURASI -->
+  <div class="card mb-6">
+    <p class="text-sm font-semibold text-stone-600 mb-3">Rata-rata waktu eksekusi</p>
+    <div class="grid grid-cols-2 gap-4">
+      <div class="p-3 bg-violet-50 rounded-xl">
+        <div class="font-mono text-xl text-violet-600" id="avg-dur-pygad">—</div>
+        <div class="text-xs text-stone-400 mt-1">PyGAD (detik)</div>
+      </div>
+      <div class="p-3 bg-emerald-50 rounded-xl">
+        <div class="font-mono text-xl text-emerald-600" id="avg-dur-deap">—</div>
+        <div class="text-xs text-stone-400 mt-1">DEAP (detik)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABEL DATA -->
+  <div class="card overflow-x-auto">
+    <p class="text-sm font-semibold text-stone-600 mb-4">Detail per pengguna</p>
+    <table class="w-full" id="data-table">
+      <thead>
+        <tr>
+          <th>Pengguna</th>
+          <th>Kronotipe</th>
+          <th>MEQ</th>
+          <th>Fitness PyGAD</th>
+          <th>Fitness DEAP</th>
+          <th>Dur. PyGAD (s)</th>
+          <th>Dur. DEAP (s)</th>
+          <th>Pemenang</th>
+          <th>Waktu</th>
+        </tr>
+      </thead>
+      <tbody id="data-tbody">
+        <tr><td colspan="9" class="text-center text-stone-300 py-8">Memuat data...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+let adminToken = sessionStorage.getItem('cs_admin_token');
+if (adminToken) showDashboard();
+
+async function doAdminLogin() {
+  const pw = document.getElementById('admin-pw').value;
+  try {
+    const res = await fetch('http://localhost:8000/api/admin/login', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ password: pw })
+    });
+    if (!res.ok) throw new Error((await res.json()).detail);
+    const data = await res.json();
+    adminToken = data.admin_token;
+    sessionStorage.setItem('cs_admin_token', adminToken);
+    showDashboard();
+  } catch(e) {
+    const alert = document.getElementById('login-alert');
+    alert.textContent = e.message;
+    alert.classList.remove('hidden');
+  }
+}
+
+function showDashboard() {
+  document.getElementById('admin-login').classList.add('hidden');
+  document.getElementById('admin-dashboard').classList.remove('hidden');
+  document.getElementById('btn-logout').style.display = '';
+  loadData();
+}
+
+function adminLogout() {
+  sessionStorage.removeItem('cs_admin_token');
+  adminToken = null;
+  document.getElementById('admin-login').classList.remove('hidden');
+  document.getElementById('admin-dashboard').classList.add('hidden');
+  document.getElementById('btn-logout').style.display = 'none';
+  document.getElementById('admin-pw').value = '';
+}
+
+async function loadData() {
+  try {
+    const res = await fetch('http://localhost:8000/api/admin/hasil', {
+      headers: { 'X-Admin-Token': adminToken }
+    });
+    if (!res.ok) { adminLogout(); return; }
+    const data = await res.json();
+    renderData(data);
+  } catch(e) { console.error(e); }
+}
+
+function renderData(rows) {
+  const total = rows.length;
+  const pygadWin = rows.filter(r => r.pemenang === 'PyGAD').length;
+  const deapWin  = rows.filter(r => r.pemenang === 'DEAP').length;
+  const avgFit   = rows.length
+    ? ((rows.reduce((s,r) => s + r.fit_pygad + r.fit_deap, 0)) / (rows.length * 2)).toFixed(1)
+    : '—';
+  const avgDurP = rows.length
+    ? (rows.reduce((s,r) => s + r.dur_pygad, 0) / rows.length).toFixed(3) : '—';
+  const avgDurD = rows.length
+    ? (rows.reduce((s,r) => s + r.dur_deap, 0) / rows.length).toFixed(3) : '—';
+
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-pygad').textContent = pygadWin;
+  document.getElementById('stat-deap').textContent  = deapWin;
+  document.getElementById('stat-avg-fit').textContent = avgFit;
+  document.getElementById('avg-dur-pygad').textContent = avgDurP;
+  document.getElementById('avg-dur-deap').textContent  = avgDurD;
+
+  const tbody = document.getElementById('data-tbody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-stone-300 py-8">Belum ada data.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td><div class="font-medium text-stone-800">${r.nama}</div><div class="text-xs text-stone-400">${r.email}</div></td>
+      <td>${r.kronotipe}</td>
+      <td class="font-mono">${r.skor_meq}</td>
+      <td class="font-mono">${r.fit_pygad?.toFixed(2)}</td>
+      <td class="font-mono">${r.fit_deap?.toFixed(2)}</td>
+      <td class="font-mono text-stone-400">${r.dur_pygad?.toFixed(3)}</td>
+      <td class="font-mono text-stone-400">${r.dur_deap?.toFixed(3)}</td>
+      <td><span class="badge ${r.pemenang === 'PyGAD' ? 'badge-pygad' : 'badge-deap'}">${r.pemenang}</span></td>
+      <td class="text-stone-400 text-xs">${r.created?.substring(0,16)}</td>
+    </tr>
+  `).join('');
+}
+
+document.getElementById('admin-pw')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter') doAdminLogin();
+});
+</script>
+</body>
+</html>

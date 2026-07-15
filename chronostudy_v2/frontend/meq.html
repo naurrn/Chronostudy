@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kuesioner MEQ — ChronoStudy</title>
+<link rel="stylesheet" href="css/navbar.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root{--cream:#FAF7F4;--dark:#1C1917;--violet:#7C5CFC;--lavender:#C8B8FF;
+    --card:#F0EBE3;--amber:#E8D5B0;--muted:#78716C;--border:#E7E0D8;}
+  body{background:var(--cream);color:var(--dark);font-family:'DM Sans',sans-serif;}
+  .font-display{font-family:'Playfair Display',serif;}
+  .font-mono-sm{font-family:'DM Mono',monospace;font-size:.72rem;}
+
+  .page-toolbar{position:sticky;top:60px;z-index:40;background:rgba(250,247,244,.92);
+    backdrop-filter:blur(12px);border-bottom:1px solid var(--border);}
+  .page-toolbar-inner{max-width:42rem;margin:0 auto;padding:.75rem 1.5rem;
+    display:flex;align-items:center;justify-content:space-between;gap:1rem;}
+
+  .progress-bar{height:3px;background:var(--border);border-radius:99px;overflow:hidden;}
+  .progress-fill{height:100%;background:var(--violet);border-radius:99px;transition:width .4s ease;}
+  .q-card{background:#fff;border:1px solid var(--border);border-radius:20px;
+    padding:1.75rem;margin-bottom:1.25rem;transition:border-color .2s;}
+  .q-card.answered{border-color:var(--lavender);}
+  .q-num{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--violet);
+    font-weight:400;margin-bottom:.5rem;letter-spacing:.05em;}
+  .q-text{font-weight:500;font-size:.95rem;color:var(--dark);line-height:1.6;margin-bottom:1rem;}
+  .option-list{display:flex;flex-direction:column;gap:.5rem;}
+  .option-item{display:flex;align-items:center;gap:.75rem;padding:.65rem 1rem;
+    border:1.5px solid var(--border);border-radius:12px;cursor:pointer;
+    transition:all .15s;user-select:none;}
+  .option-item:hover{border-color:var(--violet);background:#F5F3FF;}
+  .option-item.selected{border-color:var(--violet);background:#EDE9FE;}
+  .option-radio{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);
+    flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+  .option-item.selected .option-radio{border-color:var(--violet);background:var(--violet);}
+  .option-item.selected .option-radio::after{content:'';width:6px;height:6px;
+    border-radius:50%;background:#fff;}
+  .option-text{font-size:.875rem;color:var(--dark);}
+  .btn-primary{background:var(--violet);color:#fff;border:none;border-radius:12px;
+    padding:.8rem 2rem;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.95rem;
+    cursor:pointer;transition:opacity .15s;display:inline-flex;align-items:center;gap:8px;}
+  .btn-primary:hover{opacity:.88;}
+  .btn-primary:disabled{opacity:.5;cursor:not-allowed;}
+  .sticky-footer{position:fixed;bottom:0;left:0;right:0;background:rgba(250,247,244,.95);
+    backdrop-filter:blur(12px);border-top:1px solid var(--border);padding:1rem;
+    display:flex;align-items:center;justify-content:space-between;z-index:40;}
+  #loading-overlay{position:fixed;inset:0;background:var(--cream);z-index:100;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;}
+  #loading-overlay.hidden{display:none;}
+</style>
+</head>
+<body>
+
+<div id="loading-overlay" class="hidden">
+  <div class="font-display text-2xl text-stone-600">Menganalisis jawabanmu...</div>
+  <div class="text-stone-400 text-sm">Sebentar ya, sistem sedang menentukan kronotipemu</div>
+  <div class="w-48 h-1 bg-stone-200 rounded-full overflow-hidden mt-2">
+    <div class="h-full bg-violet-500 rounded-full animate-pulse" style="width:60%"></div>
+  </div>
+</div>
+
+<div id="navbar-root"></div>
+
+<div class="page-toolbar">
+  <div class="page-toolbar-inner">
+    <div class="flex-1 max-w-xs">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+      </div>
+      <div class="flex justify-between mt-1">
+        <span class="font-mono-sm text-stone-400" id="progress-label">0 / 19 dijawab</span>
+        <span class="font-mono-sm text-stone-400">MEQ</span>
+      </div>
+    </div>
+    <div id="nav-user" class="text-sm text-stone-400"></div>
+  </div>
+</div>
+
+<main class="max-w-2xl mx-auto px-6 pt-8 pb-32">
+  <div class="mb-8">
+    <p class="font-mono-sm text-stone-400 uppercase tracking-widest mb-2">Kuesioner Kronotipe</p>
+    <h1 class="font-display text-3xl mb-3">Kapan kamu paling <em class="text-violet-500">hidup</em>?</h1>
+    <p class="text-stone-400 text-sm leading-relaxed max-w-lg">
+      Jawab berdasarkan kebiasaan naturalmu, bukan yang menurutmu "ideal".
+      Tidak ada jawaban benar atau salah — ini soal mengenal dirimu sendiri.
+    </p>
+    <div class="mt-3 flex items-center gap-2 text-xs text-stone-400">
+      <span class="w-2 h-2 rounded-full bg-violet-300 inline-block"></span>
+      Kuesioner ini hanya diisi <strong>sekali</strong> dan tersimpan di akunmu.
+    </div>
+  </div>
+
+  <div id="questions-container">
+    <div class="text-center py-12 text-stone-400">Memuat pertanyaan...</div>
+  </div>
+</main>
+
+<div class="sticky-footer">
+  <div>
+    <span class="text-sm font-semibold text-stone-700" id="footer-count">0 dijawab</span>
+    <span class="text-sm text-stone-400"> dari 19 pertanyaan</span>
+  </div>
+  <button class="btn-primary" id="btn-submit" disabled onclick="submitMEQForm()">
+    Lihat kronotipeku →
+  </button>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/navbar.js"></script>
+<script>
+const user = requireAuth(true); // redirect if MEQ done
+if (!user) throw new Error('redirect');
+renderNavbar('buat-jadwal');
+document.getElementById('nav-user').textContent = user.nama.split(' ')[0];
+
+let questions = [];
+let answers = {}; // kode -> jawaban_index
+
+async function loadQuestions() {
+  try {
+    questions = await getMEQQuestions();
+    renderQuestions();
+  } catch(e) {
+    document.getElementById('questions-container').innerHTML =
+      `<div class="text-center text-red-500 py-12">${e.message}</div>`;
+  }
+}
+
+function renderQuestions() {
+  const container = document.getElementById('questions-container');
+  container.innerHTML = questions.map((q, i) => `
+    <div class="q-card" id="qcard-${q.kode}">
+      <div class="q-num">Pertanyaan ${i+1} dari ${questions.length}</div>
+      <div class="q-text">${q.pertanyaan}</div>
+      <div class="option-list">
+        ${q.opsi.map((o, oi) => `
+          <div class="option-item" id="opt-${q.kode}-${oi}"
+               onclick="selectOption('${q.kode}', ${oi}, this)">
+            <div class="option-radio"></div>
+            <span class="option-text">${o}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function selectOption(kode, idx, el) {
+  // Deselect all in this question
+  const card = document.getElementById(`qcard-${kode}`);
+  card.querySelectorAll('.option-item').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  card.classList.add('answered');
+
+  const wasAnswered = answers[kode] !== undefined;
+  answers[kode] = idx;
+
+  if (!wasAnswered) updateProgress();
+}
+
+function updateProgress() {
+  const count = Object.keys(answers).length;
+  const pct = (count / questions.length) * 100;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = `${count} / ${questions.length} dijawab`;
+  document.getElementById('footer-count').textContent = `${count} dijawab`;
+  document.getElementById('btn-submit').disabled = count < questions.length;
+}
+
+async function submitMEQForm() {
+  if (Object.keys(answers).length < questions.length) return;
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  document.getElementById('loading-overlay').classList.remove('hidden');
+
+  try {
+    const jawaban = questions.map(q => ({ kode: q.kode, jawaban_index: answers[q.kode] }));
+    const result = await submitMEQ(jawaban);
+
+    // Update stored user
+    const u = getUser();
+    u.skor_meq = result.skor_meq;
+    u.kronotipe = result.kronotipe;
+    setUser(u);
+
+    window.location.href = 'input.html';
+  } catch(e) {
+    document.getElementById('loading-overlay').classList.add('hidden');
+    btn.disabled = false;
+    alert(e.message);
+  }
+}
+
+loadQuestions();
+</script>
+</body>
+</html>
