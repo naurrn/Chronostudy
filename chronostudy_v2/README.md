@@ -33,7 +33,3 @@ python -m http.server 3000
 - `result.html` → Rekomendasi jadwal (mingguan + harian + download PDF)
 - `admin.html`  → Panel admin (data komparasi PyGAD vs DEAP)
 
-## Admin
-Buka `frontend/admin.html`
-Password default: `chronoadmin2024`
-(Ganti di `backend/main.py` baris `ADMIN_PASSWORD`)
