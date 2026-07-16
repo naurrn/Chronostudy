@@ -14,6 +14,8 @@ from pdf_export import generate_schedule_pdf
 from jadwal_service import buat_dan_simpan_jadwal, JadwalInfeasibleError
 from ai_chat_input import proses_pesan, reset_percakapan
 from dotenv import load_dotenv
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
 
 load_dotenv()
 
@@ -356,3 +358,6 @@ def admin_hasil(x_admin_token: str | None = Header(default=None)):
     if not x_admin_token or x_admin_token not in _admin_tokens:
         raise HTTPException(status_code=401, detail="Tidak terautentikasi sebagai admin.")
     return db.ambil_semua_hasil()
+
+FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
+app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")

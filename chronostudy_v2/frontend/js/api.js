@@ -1,5 +1,4 @@
-const BASE = "http://localhost:8000";
-
+const BASE = "";
 function getToken() { return localStorage.getItem("cs_token"); }
 function setToken(t) { localStorage.setItem("cs_token", t); }
 function removeToken() { localStorage.removeItem("cs_token"); }
