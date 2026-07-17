@@ -93,4 +93,5 @@ def buat_dan_simpan_jadwal(
         "jadwal": jadwal,
         "kurva": kurva.tolist(),
         "hari_order": HARI,
+        "input_data": input_data,
     }

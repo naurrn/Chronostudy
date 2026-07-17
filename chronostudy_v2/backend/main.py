@@ -172,11 +172,6 @@ def generate_jadwal(payload: JadwalRequest, user=Depends(get_current_user)):
             detail="Jumlah sesi melebihi slot waktu yang tersedia. Tambah hari/jam atau kurangi sesi."
         )
 
-    # Setiap library dijalankan 10 kali (masing-masing 50 generasi) dan
-    # diambil hasil dengan fitness terbaik, supaya hasil di produksi tidak
-    # bergantung pada satu kali run yang bisa saja terjebak local optimum
-    # (lihat subbab 3.8.3 poin ketiga soal sensitivitas DEAP terhadap
-    # inisialisasi acak).
     sol_p, fit_p, dur_p, riwayat_p = run_pygad_terbaik(sesi, slots, kurva, bobot, gen=50, pengulangan=10)
     sol_d, fit_d, dur_d, riwayat_d = run_deap_terbaik(sesi, slots, kurva, bobot, gen=50, pengulangan=10)
 
@@ -225,6 +220,7 @@ def jadwal_terakhir(user=Depends(get_current_user)):
         "kurva": kurva.tolist(),
         "hari_order": HARI,
         "created": hasil["created"],
+        "input_data": json.loads(hasil["input_json"]) if hasil["input_json"] else None,
     }
 
 
@@ -254,6 +250,7 @@ def jadwal_riwayat_detail(hasil_id: int, user=Depends(get_current_user)):
         "kurva": kurva.tolist(),
         "hari_order": HARI,
         "created": hasil["created"],
+        "input_data": json.loads(hasil["input_json"]) if hasil["input_json"] else None,
     }
 
 

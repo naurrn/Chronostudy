@@ -571,9 +571,9 @@ async function doDownloadPDF() {
 }
 
 async function doRegenerate() {
-  const inputRaw = localStorage.getItem('cs_input');
-  if (!inputRaw) {
-    // input lama gak ketemu (misal buka dari device/browser lain) → arahkan isi ulang manual
+  const inputData = resultData.input_data || JSON.parse(localStorage.getItem('cs_input') || 'null');
+  if (!inputData) {
+    // beneran gak ada data input tersimpan sama sekali (kasus jadwal lama sebelum fix ini)
     window.location.href = 'input.html';
     return;
   }
@@ -582,7 +582,7 @@ async function doRegenerate() {
   btn.disabled = true;
   btn.textContent = '⏳ Membuat ulang...';
   try {
-    resultData = await generateJadwal(JSON.parse(inputRaw));
+    resultData = await generateJadwal(inputData);
     renderAll();
   } catch(e) {
     alert(e.message);
