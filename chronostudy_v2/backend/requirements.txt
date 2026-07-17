@@ -7,4 +7,4 @@ deap==1.4.1
 reportlab==4.2.0
 python-multipart==0.0.9
 python-dotenv==1.0.1
-google-genai==2.11.0
+groq==0.31.0

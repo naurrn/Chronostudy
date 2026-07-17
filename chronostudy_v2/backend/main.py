@@ -316,7 +316,7 @@ def chat(payload: ChatMessage):
 @app.post("/api/chat/ai-input")
 def chat_ai_input(payload: ChatMessage, user=Depends(get_current_user)):
     """
-    Chatbot AI (Claude API) buat membuat jadwal lewat percakapan bahasa natural.
+    Chatbot AI (Groq) buat membuat jadwal lewat percakapan bahasa natural.
     Beda dari /api/chat (rule-based, cuma FAQ) -- endpoint ini mengumpulkan
     data mata kuliah + hari + jam lewat obrolan, lalu langsung generate jadwal
     begitu semua data lengkap dan feasible.
