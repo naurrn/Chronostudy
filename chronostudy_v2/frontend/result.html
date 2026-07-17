@@ -33,6 +33,13 @@
     border:1px solid var(--border);border-radius:24px;padding:2.5rem;
     display:flex;align-items:flex-start;justify-content:space-between;gap:1.5rem;}
 
+  @media (max-width: 640px) {
+  .krono-card {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1.5rem;
+  }
+}
   /* ENERGY RIBBON — signature element */
   .day-card{background:#fff;border:1px solid var(--border);border-radius:20px;
     display:flex;overflow:hidden;margin-bottom:12px;
@@ -62,6 +69,7 @@
   @media(max-width:640px){.week-grid{columns:1;}}
   @media(min-width:1024px){.week-grid{columns:3;}}
   .week-grid .day-card{break-inside:avoid;}
+  
 
   /* KURVA */
   .kurva-wrap{background:#fff;border:1px solid var(--border);border-radius:20px;padding:1.5rem;margin-bottom:1.25rem;}
@@ -232,11 +240,11 @@
       <h1 class="font-display text-3xl mb-2" id="result-title">—</h1>
       <p class="text-stone-500 text-base leading-relaxed max-w-md" id="result-desc">—</p>
     </div>
-    <div class="flex flex-col gap-2 items-end shrink-0">
+     <div class="flex flex-col gap-3 items-start w-full sm:items-end sm:w-auto sm:shrink-0 mt-4 sm:mt-0">
       <div id="krono-badge" class="text-2xl"></div>
-      <div class="flex gap-2">
-        <button class="btn-primary" style="padding:.6rem 1.25rem;font-size:.8rem" onclick="doDownloadPDF()">⬇ Unduh PDF</button>
-        <button class="btn-primary" style="padding:.6rem 1.25rem;font-size:.8rem" onclick="doSavePNG()">🖼️ Simpan Wallpaper</button>
+      <div class="flex flex-col gap-2 w-full sm:flex-row sm:w-auto">
+        <button class="btn-primary w-full sm:w-auto justify-center" style="padding:.6rem 1.25rem;font-size:.8rem" onclick="doDownloadPDF()">⬇ Unduh PDF</button>
+        <button class="btn-primary w-full sm:w-auto justify-center" style="padding:.6rem 1.25rem;font-size:.8rem" onclick="doSavePNG()">🖼️ Simpan Wallpaper</button>
       </div>
     </div>
   </div>
