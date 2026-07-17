@@ -61,6 +61,10 @@ Baik, ada 2 mata kuliah.
 
 Sekarang untuk mata kuliah Desain,
 
+Tanyakan dengan bahasa natural, dan SELALU format daftar opsinya dengan baris
+baru per opsi (jangan digabung jadi satu kalimat panjang), contoh persis
+seperti ini:
+
 Buat lulus mata kuliah ini, kamu paling sering:
 
 (a) menghafal istilah/rumus
